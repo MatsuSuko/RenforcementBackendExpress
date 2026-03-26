@@ -28,8 +28,8 @@ const options = {
                         firstname: { type: 'string' },
                         lastname: { type: 'string' },
                         email: { type: 'string' },
-                        role: { type: 'string', enum: ['administrateur', 'gestionnaire', 'charge_suivi', 'charge_clientele'] },
-                        actif: { type: 'boolean' }
+                        role: { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] },
+                        active: { type: 'boolean' }
                     }
                 },
                 Sinistre: {
@@ -74,12 +74,6 @@ const options = {
                         commentaire: { type: 'string' },
                         date_echeance: { type: 'string', format: 'date-time' }
                     }
-                },
-                Error: {
-                    type: 'object',
-                    properties: {
-                        message: { type: 'string' }
-                    }
                 }
             }
         },
@@ -87,7 +81,7 @@ const options = {
         paths: {
 
             // ── AUTH ──────────────────────────────────────────────
-            '/auth/login': {
+            '/login': {
                 post: {
                     tags: ['Auth'],
                     summary: 'Connexion',
@@ -100,7 +94,7 @@ const options = {
                                     type: 'object',
                                     required: ['username', 'password'],
                                     properties: {
-                                        username: { type: 'string', example: 'jdupont' },
+                                        username: { type: 'string', example: 'admin' },
                                         password: { type: 'string', example: 'MotDeP@ss123' }
                                     }
                                 }
@@ -108,39 +102,24 @@ const options = {
                         }
                     },
                     responses: {
-                        200: { description: 'Connexion réussie — retourne un token JWT ou demande le code 2FA' },
-                        401: { description: 'Identifiants incorrects' },
-                        403: { description: 'Compte désactivé' }
+                        200: { description: 'Connexion réussie — retourne un token JWT' },
+                        401: { description: 'Mot de passe incorrect' },
+                        403: { description: 'Compte désactivé' },
+                        404: { description: 'Utilisateur introuvable' }
                     }
                 }
             },
-            '/auth/2fa/verify': {
+            '/logout': {
                 post: {
                     tags: ['Auth'],
-                    summary: 'Vérification code 2FA',
-                    security: [],
-                    requestBody: {
-                        required: true,
-                        content: {
-                            'application/json': {
-                                schema: {
-                                    type: 'object',
-                                    required: ['user_id', 'code'],
-                                    properties: {
-                                        user_id: { type: 'integer', example: 1 },
-                                        code: { type: 'string', example: '123456' }
-                                    }
-                                }
-                            }
-                        }
-                    },
+                    summary: 'Déconnexion',
                     responses: {
-                        200: { description: 'Code valide — retourne le token JWT' },
-                        401: { description: 'Code incorrect ou expiré' }
+                        200: { description: 'Déconnecté avec succès' },
+                        401: { description: 'Token manquant ou invalide' }
                     }
                 }
             },
-            '/auth/forgot-password': {
+            '/forgot-password': {
                 post: {
                     tags: ['Auth'],
                     summary: 'Demande de réinitialisation de mot de passe',
@@ -153,7 +132,7 @@ const options = {
                                     type: 'object',
                                     required: ['email'],
                                     properties: {
-                                        email: { type: 'string', example: 'jean.dupont@assurmoi.fr' }
+                                        email: { type: 'string', example: 'admin@assurmoi.fr' }
                                     }
                                 }
                             }
@@ -164,7 +143,7 @@ const options = {
                     }
                 }
             },
-            '/auth/reset-password': {
+            '/reset-password': {
                 post: {
                     tags: ['Auth'],
                     summary: 'Réinitialisation du mot de passe',
@@ -190,10 +169,10 @@ const options = {
                     }
                 }
             },
-            '/auth/change-password': {
+            '/change-password': {
                 put: {
                     tags: ['Auth'],
-                    summary: 'Changement de mot de passe (connecté)',
+                    summary: 'Changement de mot de passe',
                     requestBody: {
                         required: true,
                         content: {
@@ -224,9 +203,7 @@ const options = {
                     parameters: [
                         { in: 'query', name: 'search', schema: { type: 'string' }, description: 'Recherche par prénom' }
                     ],
-                    responses: {
-                        200: { description: 'Liste des utilisateurs' }
-                    }
+                    responses: { 200: { description: 'Liste des utilisateurs' } }
                 },
                 post: {
                     tags: ['Users'],
@@ -239,12 +216,12 @@ const options = {
                                     type: 'object',
                                     required: ['username', 'password'],
                                     properties: {
-                                        username: { type: 'string' },
-                                        password: { type: 'string' },
-                                        firstname: { type: 'string' },
-                                        lastname: { type: 'string' },
-                                        email: { type: 'string' },
-                                        role: { type: 'string', enum: ['administrateur', 'gestionnaire', 'charge_suivi', 'charge_clientele'] }
+                                        username: { type: 'string', example: 'jdupont' },
+                                        password: { type: 'string', example: 'Test@123' },
+                                        firstname: { type: 'string', example: 'Jean' },
+                                        lastname: { type: 'string', example: 'Dupont' },
+                                        email: { type: 'string', example: 'jean.dupont@assurmoi.fr' },
+                                        role: { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] }
                                     }
                                 }
                             }
@@ -261,10 +238,7 @@ const options = {
                     tags: ['Users'],
                     summary: 'Récupérer un utilisateur',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
-                    responses: {
-                        200: { description: 'Utilisateur trouvé' },
-                        404: { description: 'Introuvable' }
-                    }
+                    responses: { 200: { description: 'Utilisateur trouvé' } }
                 },
                 put: {
                     tags: ['Users'],
@@ -273,21 +247,26 @@ const options = {
                     requestBody: {
                         content: {
                             'application/json': {
-                                schema: { $ref: '#/components/schemas/User' }
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        firstname: { type: 'string' },
+                                        lastname: { type: 'string' },
+                                        email: { type: 'string' },
+                                        role: { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] },
+                                        active: { type: 'boolean' }
+                                    }
+                                }
                             }
                         }
                     },
-                    responses: {
-                        200: { description: 'Utilisateur modifié' }
-                    }
+                    responses: { 200: { description: 'Utilisateur modifié' } }
                 },
                 delete: {
                     tags: ['Users'],
                     summary: 'Supprimer un utilisateur',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
-                    responses: {
-                        200: { description: 'Utilisateur supprimé' }
-                    }
+                    responses: { 200: { description: 'Utilisateur supprimé' } }
                 }
             },
 
@@ -313,9 +292,9 @@ const options = {
                                         conducteur_nom: { type: 'string', example: 'Dupont' },
                                         conducteur_prenom: { type: 'string', example: 'Jean' },
                                         conducteur_est_assure: { type: 'boolean', example: true },
-                                        date_appel: { type: 'string', format: 'date-time' },
-                                        date_accident: { type: 'string', format: 'date-time' },
-                                        contexte: { type: 'string', example: 'Collision au carrefour' },
+                                        date_appel: { type: 'string', format: 'date-time', example: '2026-03-25T10:00:00Z' },
+                                        date_accident: { type: 'string', format: 'date-time', example: '2026-03-25T09:00:00Z' },
+                                        contexte: { type: 'string', example: 'Collision au carrefour de la Paix' },
                                         responsabilite_engagee: { type: 'boolean', example: true },
                                         pourcentage_responsabilite: { type: 'integer', enum: [0, 50, 100], example: 50 }
                                     }
@@ -378,8 +357,8 @@ const options = {
                                     type: 'object',
                                     required: ['sinistre_id'],
                                     properties: {
-                                        sinistre_id: { type: 'integer' },
-                                        charge_suivi_id: { type: 'integer' },
+                                        sinistre_id: { type: 'integer', example: 1 },
+                                        charge_suivi_id: { type: 'integer', example: 2 },
                                         scenario: { type: 'string', enum: ['reparable', 'perte_totale'] }
                                     }
                                 }
@@ -450,7 +429,7 @@ const options = {
                                     type: 'object',
                                     required: ['dossier_id', 'libelle'],
                                     properties: {
-                                        dossier_id: { type: 'integer' },
+                                        dossier_id: { type: 'integer', example: 1 },
                                         libelle: { type: 'string', example: 'Expertise planifiée' },
                                         validation_requise: { type: 'boolean', example: false },
                                         date_echeance: { type: 'string', format: 'date-time' }
