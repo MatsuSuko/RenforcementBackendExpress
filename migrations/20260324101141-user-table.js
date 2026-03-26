@@ -13,8 +13,8 @@ module.exports = {
         },
         username: {
           type: Sequelize.STRING,
-          allowNull: false,
-          unique: true
+          unique: true,
+          allowNull: false
         },
         password: {
           type: Sequelize.STRING,
@@ -29,31 +29,30 @@ module.exports = {
           allowNull: true
         },
         email: {
+          type: Sequelize.STRING
+        },
+        role: {
+          type: Sequelize.ENUM,
+          values: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'],
+          allowNull: false,
+          defaultValue: 'insured'
+        },
+        token: {
+          type: Sequelize.TEXT,
+          allowNull: true
+        },
+        refresh_token: {
+          type: Sequelize.TEXT,
+          allowNull: true
+        },
+        two_step_code: {
           type: Sequelize.STRING,
           allowNull: true
         },
-        role: {
-          type: Sequelize.ENUM('administrateur', 'gestionnaire', 'charge_suivi', 'charge_clientele'),
-          allowNull: false,
-          defaultValue: 'charge_clientele'
-        },
-        actif: {
+        active: {
           type: Sequelize.BOOLEAN,
           allowNull: false,
           defaultValue: true
-        },
-        deux_facteurs_actif: {
-          type: Sequelize.BOOLEAN,
-          allowNull: false,
-          defaultValue: false
-        },
-        deux_facteurs_code: {
-          type: Sequelize.STRING,
-          allowNull: true
-        },
-        deux_facteurs_expiration: {
-          type: Sequelize.DATE,
-          allowNull: true
         },
         reset_token: {
           type: Sequelize.STRING,
@@ -64,7 +63,6 @@ module.exports = {
           allowNull: true
         }
       }, { transaction });
-
       await transaction.commit();
     } catch (err) {
       await transaction.rollback();

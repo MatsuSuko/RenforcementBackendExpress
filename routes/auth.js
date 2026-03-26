@@ -1,18 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middlewares/auth');
-const {
-    login,
-    verify2FA,
-    forgotPassword,
-    resetPassword,
-    changePassword
-} = require('../services/auth');
+const { login, logout, forgotPassword, resetPassword, changePassword } = require('../services/auth');
+const { validateAuthentication } = require('../middlewares/auth');
 
 router.post('/login', login);
-router.post('/2fa/verify', verify2FA);
+router.post('/logout', validateAuthentication, logout);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
-router.put('/change-password', authMiddleware, changePassword);
+router.put('/change-password', validateAuthentication, changePassword);
 
 module.exports = router;

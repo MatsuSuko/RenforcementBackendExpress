@@ -1,32 +1,31 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+require('dotenv').config();
 
-async function authMiddleware(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
+const validateAuthentication = (req, res, next) => {
+    const authorizationHeader = req.header('authorization');
+    const token = authorizationHeader?.split(' ')[1];
 
-    if (!token) {
-        return res.status(401).json({ message: 'Token manquant' });
-    }
+    if (!token) return res.status(401).json({ message: 'No token provided' });
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    jwt.verify(token, process.env.SECRET_KEY, async (err, decoded) => {
+        if (err) return res.status(401).json({ message: 'Wrong JWT token' });
 
-        const user = await User.findOne({ where: { id: decoded.id } });
+        const user = await User.findOne({ where: { token } });
 
-        if (!user) {
-            return res.status(401).json({ message: 'Utilisateur introuvable' });
-        }
+        if (!user) return res.status(403).json({ message: 'Session expired' });
 
-        if (!user.actif) {
-            return res.status(403).json({ message: 'Compte désactivé' });
+        if (!user.active) return res.status(403).json({ message: 'Account disabled' });
+
+        if (Date.now() >= (decoded.exp * 1000)) {
+            user.token = null;
+            await user.save();
+            return res.status(403).json({ message: 'Token expired' });
         }
 
         req.user = user;
         next();
-    } catch (err) {
-        return res.status(401).json({ message: 'Token invalide ou expiré' });
-    }
-}
+    });
+};
 
-module.exports = { authMiddleware };
+module.exports = { validateAuthentication };

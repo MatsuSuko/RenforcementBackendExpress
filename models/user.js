@@ -3,14 +3,13 @@ const { Model, DataTypes } = require('sequelize');
 const User = (dbInstance, DataTypes) => {
     class User extends Model {
         static associate(models) {
-            this.hasMany(models.Sinistre, {
-                foreignKey: 'utilisateur_id',
-                as: 'Sinistres'
-            });
-            this.hasMany(models.Dossier, {
-                foreignKey: 'charge_suivi_id',
-                as: 'Dossiers'
-            });
+            this.hasMany(models.Sinistre, { foreignKey: 'utilisateur_id', as: 'Sinistres' });
+            this.hasMany(models.Dossier, { foreignKey: 'charge_suivi_id', as: 'Dossiers' });
+        }
+
+        clean() {
+            const { password, token, refresh_token, two_step_code, reset_token, reset_token_expiration, ...cleanUser } = this.dataValues;
+            return cleanUser;
         }
     }
 
@@ -18,8 +17,8 @@ const User = (dbInstance, DataTypes) => {
         {
             username: {
                 type: DataTypes.STRING,
-                allowNull: false,
-                unique: true
+                unique: true,
+                allowNull: false
             },
             password: {
                 type: DataTypes.STRING,
@@ -33,32 +32,28 @@ const User = (dbInstance, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: true
             },
-            email: {
+            email: DataTypes.STRING,
+            role: {
+                type: DataTypes.ENUM('superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'),
+                allowNull: false,
+                defaultValue: 'insured'
+            },
+            token: {
+                type: DataTypes.TEXT,
+                allowNull: true
+            },
+            refresh_token: {
+                type: DataTypes.TEXT,
+                allowNull: true
+            },
+            two_step_code: {
                 type: DataTypes.STRING,
                 allowNull: true
             },
-            role: {
-                type: DataTypes.ENUM('administrateur', 'gestionnaire', 'charge_suivi', 'charge_clientele'),
-                allowNull: false,
-                defaultValue: 'charge_clientele'
-            },
-            actif: {
+            active: {
                 type: DataTypes.BOOLEAN,
                 allowNull: false,
                 defaultValue: true
-            },
-            deux_facteurs_actif: {
-                type: DataTypes.BOOLEAN,
-                allowNull: false,
-                defaultValue: false
-            },
-            deux_facteurs_code: {
-                type: DataTypes.STRING,
-                allowNull: true
-            },
-            deux_facteurs_expiration: {
-                type: DataTypes.DATE,
-                allowNull: true
             },
             reset_token: {
                 type: DataTypes.STRING,
