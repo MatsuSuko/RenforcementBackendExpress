@@ -2,14 +2,8 @@ const { User, dbInstance } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { sendResetPasswordMail, sendTwoFactorMail } = require('../utils/mailer');
 require('dotenv').config();
-
-const transporter = nodemailer.createTransport({
-    host: process.env.MAIL_HOST || 'mailhog',
-    port: process.env.MAIL_PORT || 1025,
-    secure: false
-});
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 const login = async (req, res) => {
@@ -24,8 +18,20 @@ const login = async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) return res.status(401).json({ message: 'Incorrect password' });
 
-        const token = jwt.sign({ user: user.clean() }, process.env.SECRET_KEY, { expiresIn: '24h' });
+        // Si 2FA activé, envoyer un code par mail
+        if (user.two_step_code !== null) {
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            user.two_step_code = code;
+            await user.save();
+            await sendTwoFactorMail(user.email, code);
+            return res.status(200).json({
+                two_factor_required: true,
+                user_id: user.id,
+                message: 'Code envoyé par email'
+            });
+        }
 
+        const token = jwt.sign({ user: user.clean() }, process.env.SECRET_KEY, { expiresIn: '24h' });
         user.token = token;
         await user.save();
 
@@ -57,14 +63,7 @@ const forgotPassword = async (req, res) => {
         user.reset_token_expiration = expiration;
         await user.save();
 
-        const resetUrl = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
-
-        await transporter.sendMail({
-            from: 'noreply@assurmoi.fr',
-            to: user.email,
-            subject: 'Réinitialisation de votre mot de passe AssurMoi',
-            text: `Cliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}\n\nCe lien expire dans 1 heure.`
-        });
+        await sendResetPasswordMail(email, token);
 
         return res.status(200).json({ message: 'Si cet email existe, un lien a été envoyé' });
     } catch (err) {
