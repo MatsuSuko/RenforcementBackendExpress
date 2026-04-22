@@ -3,3 +3,5 @@ node_modules
 .npm
 db-data
 .idea
+.expo
+.vscode

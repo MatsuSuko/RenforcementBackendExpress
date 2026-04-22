@@ -52,3 +52,19 @@ services:
       - app-assurmoi-db
     networks:
       - default
+
+
+  # react native environment
+  app-assurmoi-app:
+    container_name: 'app-assurmoi-reactnative'
+    build:
+      context: ./
+      dockerfile: Dockerfile.front
+    command: 'npm run start'
+    environment:
+      - NODE_ENV=development
+    ports:
+      - 8081:8081
+    volumes:
+      - './assurmobile:/home/app'
+    working_dir: '/home/app/assurmobile'

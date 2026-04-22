@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000
 app.use(express.json());
 app.use(cors({
     credentials: true,
-    origin: ['http://localhost:3000', '*']
+    origin: true // autorise toutes les origines en dev (localhost:8081, app mobile, etc.)
 }))
 
 // Documentation Swagger
