@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { jwtDecode } from 'jwt-decode';
 import { API } from '@/constants/api';
 
 interface User {
@@ -6,15 +7,23 @@ interface User {
     username: string;
     email: string;
     role: string;
+    firstname?: string;
+    lastname?: string;
+}
+
+interface JwtPayload {
+    user: User;
+    iat: number;
+    exp: number;
 }
 
 interface AuthContextType {
     user: User | null;
     token: string | null;
     isLoading: boolean;
+    isAuthenticated: boolean;
     login: (username: string, password: string) => Promise<void>;
     logout: () => void;
-    isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,11 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error(data.message || 'Identifiants incorrects');
             }
 
-            setToken(data.token);
+            // Décodage sécurisé du JWT avec jwt-decode
+            const decoded = jwtDecode<JwtPayload>(data.token);
 
-            // Décoder le payload du JWT pour récupérer l'utilisateur
-            const payload = JSON.parse(atob(data.token.split('.')[1]));
-            setUser(payload.user);
+            setToken(data.token);
+            setUser(decoded.user);
         } finally {
             setIsLoading(false);
         }
@@ -71,9 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 user,
                 token,
                 isLoading,
+                isAuthenticated: !!token,
                 login,
                 logout,
-                isAuthenticated: !!token,
             }}
         >
             {children}

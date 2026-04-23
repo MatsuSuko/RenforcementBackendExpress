@@ -1,19 +1,20 @@
 import { Platform } from 'react-native';
+import { NGROK_URL, MAC_IP } from './config';
 
-// IP de ton Mac sur le réseau local (pour iPhone physique)
-const MAC_IP = '10.18.72.59';
+// Priorité : ngrok > réseau local > localhost (web)
+const getBaseUrl = (): string => {
+    if (NGROK_URL) return NGROK_URL;                        // ngrok actif (iPhone sans même Wi-Fi)
+    if (Platform.OS === 'android') return 'http://10.0.2.2:3000';  // émulateur Android
+    if (Platform.OS === 'web') return 'http://localhost:3000';     // navigateur PC
+    return `http://${MAC_IP}:3000`;                         // iPhone physique (même Wi-Fi)
+};
 
-const BASE_URL =
-    Platform.OS === 'android'
-        ? 'http://10.0.2.2:3000'    // Android emulator
-        : Platform.OS === 'web'
-        ? 'http://localhost:3000'   // Navigateur web (test PC)
-        : `http://${MAC_IP}:3000`;  // iPhone physique
+const BASE_URL = getBaseUrl();
 
 export const API = {
     BASE_URL,
-    LOGIN: `${BASE_URL}/login`,
-    LOGOUT: `${BASE_URL}/logout`,
-    FORGOT_PASSWORD: `${BASE_URL}/forgot-password`,
-    RESET_PASSWORD: `${BASE_URL}/reset-password`,
+    LOGIN:            `${BASE_URL}/login`,
+    LOGOUT:           `${BASE_URL}/logout`,
+    FORGOT_PASSWORD:  `${BASE_URL}/forgot-password`,
+    RESET_PASSWORD:   `${BASE_URL}/reset-password`,
 };
