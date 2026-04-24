@@ -2,7 +2,7 @@ const { User, dbInstance } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { sendResetPasswordMail, sendTwoFactorMail } = require('../utils/mailer');
+const { sendResetPasswordMail, sendTwoFactorMail, sendLoginMail } = require('../utils/mailer');
 require('dotenv').config();
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
@@ -34,6 +34,9 @@ const login = async (req, res) => {
         const token = jwt.sign({ user: user.clean() }, process.env.SECRET_KEY, { expiresIn: '24h' });
         user.token = token;
         await user.save();
+
+        // Notification de connexion par mail (sans bloquer la réponse)
+        sendLoginMail(user).catch(err => console.error('Mail login failed:', err.message));
 
         return res.status(200).json({ token });
     } catch (err) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { sinistresApi } from '@/utils/fetchData';
+import { sinistresApi } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────

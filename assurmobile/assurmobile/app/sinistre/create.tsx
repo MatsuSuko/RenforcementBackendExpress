@@ -6,7 +6,7 @@ import {
 import { Text, TextInput, Button, Switch, HelperText } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { sinistresApi } from '@/utils/fetchData';
+import { sinistresApi } from '@/utils/api';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function toISODate(d: string): string {

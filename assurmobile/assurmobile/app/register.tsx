@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { authApi } from '@/utils/fetchData';
+import { authApi } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function RegisterScreen() {

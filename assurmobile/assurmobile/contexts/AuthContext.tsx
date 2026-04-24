@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
-import { authApi } from '@/utils/fetchData';
+import { authApi } from '@/utils/api';
 
 const TOKEN_KEY = '@assurmoi_token';
 
