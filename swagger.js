@@ -13,74 +13,89 @@ const options = {
         ],
         components: {
             securitySchemes: {
-                bearerAuth: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT'
-                }
+                bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
             },
             schemas: {
                 User: {
                     type: 'object',
                     properties: {
-                        id: { type: 'integer' },
-                        username: { type: 'string' },
+                        id:        { type: 'integer' },
+                        username:  { type: 'string' },
                         firstname: { type: 'string' },
-                        lastname: { type: 'string' },
-                        email: { type: 'string' },
-                        role: { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] },
-                        active: { type: 'boolean' }
+                        lastname:  { type: 'string' },
+                        email:     { type: 'string' },
+                        role:      { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] },
+                        active:    { type: 'boolean' }
                     }
                 },
                 Sinistre: {
                     type: 'object',
                     properties: {
-                        id: { type: 'integer' },
-                        immatriculation: { type: 'string' },
-                        conducteur_nom: { type: 'string' },
-                        conducteur_prenom: { type: 'string' },
-                        conducteur_est_assure: { type: 'boolean' },
-                        date_appel: { type: 'string', format: 'date-time' },
-                        date_accident: { type: 'string', format: 'date-time' },
-                        contexte: { type: 'string' },
-                        responsabilite_engagee: { type: 'boolean' },
-                        pourcentage_responsabilite: { type: 'integer', enum: [0, 50, 100] },
-                        statut: { type: 'string', enum: ['en_cours', 'complet', 'clos'] }
+                        id:                         { type: 'integer' },
+                        utilisateur_id:             { type: 'integer' },
+                        immatriculation:            { type: 'string' },
+                        conducteur_nom:             { type: 'string' },
+                        conducteur_prenom:          { type: 'string' },
+                        conducteur_est_assure:      { type: 'boolean' },
+                        date_appel:                 { type: 'string', format: 'date-time' },
+                        date_accident:              { type: 'string', format: 'date-time' },
+                        contexte:                   { type: 'string' },
+                        responsabilite_engagee:     { type: 'boolean' },
+                        pourcentage_responsabilite: { type: 'integer', minimum: 0, maximum: 100 },
+                        statut:                     { type: 'string', enum: ['en_cours', 'complet', 'clos'] },
+                        created_at:                 { type: 'string', format: 'date-time' },
+                        updated_at:                 { type: 'string', format: 'date-time' }
+                    }
+                },
+                DocumentSinistre: {
+                    type: 'object',
+                    properties: {
+                        id:            { type: 'integer' },
+                        sinistre_id:   { type: 'integer' },
+                        type:          { type: 'string', enum: ['attestation_assurance', 'carte_grise', 'piece_identite'] },
+                        chemin_fichier: { type: 'string' },
+                        uploaded_at:   { type: 'string', format: 'date-time' }
                     }
                 },
                 Dossier: {
                     type: 'object',
                     properties: {
-                        id: { type: 'integer' },
-                        numero_dossier: { type: 'string' },
-                        sinistre_id: { type: 'integer' },
+                        id:              { type: 'integer' },
+                        numero_dossier:  { type: 'string' },
+                        sinistre_id:     { type: 'integer' },
                         charge_suivi_id: { type: 'integer' },
                         statut: {
                             type: 'string',
                             enum: ['initialise', 'expertise_en_attente', 'expertise_planifiee', 'expertise_realisee', 'intervention_en_cours', 'vehicule_restitue', 'en_attente_facturation', 'en_attente_reglement', 'clos']
                         },
-                        scenario: { type: 'string', enum: ['reparable', 'perte_totale'] }
+                        scenario:   { type: 'string', enum: ['reparable', 'perte_totale'] },
+                        created_at: { type: 'string', format: 'date-time' }
                     }
                 },
                 EtapeDossier: {
                     type: 'object',
                     properties: {
-                        id: { type: 'integer' },
-                        dossier_id: { type: 'integer' },
-                        libelle: { type: 'string' },
-                        statut: { type: 'string', enum: ['en_attente', 'en_cours', 'complete', 'validee'] },
+                        id:                 { type: 'integer' },
+                        dossier_id:         { type: 'integer' },
+                        libelle:            { type: 'string' },
+                        statut:             { type: 'string', enum: ['en_attente', 'en_cours', 'complete', 'validee'] },
                         validation_requise: { type: 'boolean' },
-                        valide: { type: 'boolean' },
-                        commentaire: { type: 'string' },
-                        date_echeance: { type: 'string', format: 'date-time' }
+                        valide:             { type: 'boolean' },
+                        commentaire:        { type: 'string' },
+                        date_echeance:      { type: 'string', format: 'date-time' },
+                        completed_at:       { type: 'string', format: 'date-time' }
                     }
+                },
+                Error: {
+                    type: 'object',
+                    properties: { message: { type: 'string' } }
                 }
             }
         },
         security: [{ bearerAuth: [] }],
         paths: {
 
-            // ── AUTH ──────────────────────────────────────────────
+            // ── AUTH ──────────────────────────────────────────────────────────
             '/login': {
                 post: {
                     tags: ['Auth'],
@@ -94,8 +109,8 @@ const options = {
                                     type: 'object',
                                     required: ['username', 'password'],
                                     properties: {
-                                        username: { type: 'string', example: 'admin' },
-                                        password: { type: 'string', example: 'MotDeP@ss123' }
+                                        username: { type: 'string', example: 'root' },
+                                        password: { type: 'string', example: 'root' }
                                     }
                                 }
                             }
@@ -109,6 +124,38 @@ const options = {
                     }
                 }
             },
+
+            '/register': {
+                post: {
+                    tags: ['Auth'],
+                    summary: 'Inscription (crée un compte avec le rôle insured)',
+                    security: [],
+                    requestBody: {
+                        required: true,
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    required: ['username', 'email', 'password'],
+                                    properties: {
+                                        username:  { type: 'string', example: 'jdupont' },
+                                        firstname: { type: 'string', example: 'Jean' },
+                                        lastname:  { type: 'string', example: 'Dupont' },
+                                        email:     { type: 'string', example: 'jean.dupont@assurmoi.fr' },
+                                        password:  { type: 'string', example: 'MonMotDePasse123' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: {
+                        201: { description: 'Compte créé — retourne un token JWT' },
+                        400: { description: 'Champs obligatoires manquants' },
+                        409: { description: "Nom d'utilisateur déjà pris" }
+                    }
+                }
+            },
+
             '/logout': {
                 post: {
                     tags: ['Auth'],
@@ -119,10 +166,11 @@ const options = {
                     }
                 }
             },
+
             '/forgot-password': {
                 post: {
                     tags: ['Auth'],
-                    summary: 'Demande de réinitialisation de mot de passe',
+                    summary: 'Demande de réinitialisation de mot de passe (envoie un email)',
                     security: [],
                     requestBody: {
                         required: true,
@@ -131,22 +179,19 @@ const options = {
                                 schema: {
                                     type: 'object',
                                     required: ['email'],
-                                    properties: {
-                                        email: { type: 'string', example: 'admin@assurmoi.fr' }
-                                    }
+                                    properties: { email: { type: 'string', example: 'jean.dupont@assurmoi.fr' } }
                                 }
                             }
                         }
                     },
-                    responses: {
-                        200: { description: 'Email envoyé si le compte existe' }
-                    }
+                    responses: { 200: { description: 'Email envoyé si le compte existe' } }
                 }
             },
+
             '/reset-password': {
                 post: {
                     tags: ['Auth'],
-                    summary: 'Réinitialisation du mot de passe',
+                    summary: 'Réinitialisation du mot de passe avec le token reçu par email',
                     security: [],
                     requestBody: {
                         required: true,
@@ -156,7 +201,7 @@ const options = {
                                     type: 'object',
                                     required: ['token', 'password'],
                                     properties: {
-                                        token: { type: 'string' },
+                                        token:    { type: 'string', description: 'Token reçu par email' },
                                         password: { type: 'string', example: 'NouveauMdp@123' }
                                     }
                                 }
@@ -169,10 +214,11 @@ const options = {
                     }
                 }
             },
+
             '/change-password': {
                 put: {
                     tags: ['Auth'],
-                    summary: 'Changement de mot de passe',
+                    summary: 'Changement de mot de passe (utilisateur connecté)',
                     requestBody: {
                         required: true,
                         content: {
@@ -182,20 +228,20 @@ const options = {
                                     required: ['current_password', 'new_password'],
                                     properties: {
                                         current_password: { type: 'string' },
-                                        new_password: { type: 'string' }
+                                        new_password:     { type: 'string' }
                                     }
                                 }
                             }
                         }
                     },
                     responses: {
-                        200: { description: 'Mot de passe modifié' },
+                        200: { description: 'Mot de passe modifié avec succès' },
                         401: { description: 'Mot de passe actuel incorrect' }
                     }
                 }
             },
 
-            // ── USERS ─────────────────────────────────────────────
+            // ── USERS ─────────────────────────────────────────────────────────
             '/user': {
                 get: {
                     tags: ['Users'],
@@ -216,12 +262,12 @@ const options = {
                                     type: 'object',
                                     required: ['username', 'password'],
                                     properties: {
-                                        username: { type: 'string', example: 'jdupont' },
-                                        password: { type: 'string', example: 'Test@123' },
+                                        username:  { type: 'string', example: 'jdupont' },
+                                        password:  { type: 'string', example: 'Test@123' },
                                         firstname: { type: 'string', example: 'Jean' },
-                                        lastname: { type: 'string', example: 'Dupont' },
-                                        email: { type: 'string', example: 'jean.dupont@assurmoi.fr' },
-                                        role: { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] }
+                                        lastname:  { type: 'string', example: 'Dupont' },
+                                        email:     { type: 'string', example: 'jean.dupont@assurmoi.fr' },
+                                        role:      { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] }
                                     }
                                 }
                             }
@@ -238,7 +284,7 @@ const options = {
                     tags: ['Users'],
                     summary: 'Récupérer un utilisateur',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
-                    responses: { 200: { description: 'Utilisateur trouvé' } }
+                    responses: { 200: { description: 'Utilisateur trouvé' }, 404: { description: 'Introuvable' } }
                 },
                 put: {
                     tags: ['Users'],
@@ -251,10 +297,10 @@ const options = {
                                     type: 'object',
                                     properties: {
                                         firstname: { type: 'string' },
-                                        lastname: { type: 'string' },
-                                        email: { type: 'string' },
-                                        role: { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] },
-                                        active: { type: 'boolean' }
+                                        lastname:  { type: 'string' },
+                                        email:     { type: 'string' },
+                                        role:      { type: 'string', enum: ['superadmin', 'manager', 'sinister_manager', 'request_manager', 'insured'] },
+                                        active:    { type: 'boolean' }
                                     }
                                 }
                             }
@@ -270,11 +316,11 @@ const options = {
                 }
             },
 
-            // ── SINISTRES ─────────────────────────────────────────
+            // ── SINISTRES ─────────────────────────────────────────────────────
             '/sinistre': {
                 get: {
                     tags: ['Sinistres'],
-                    summary: 'Liste tous les sinistres',
+                    summary: 'Liste tous les sinistres (avec conducteur, documents, dossier)',
                     responses: { 200: { description: 'Liste des sinistres' } }
                 },
                 post: {
@@ -288,15 +334,15 @@ const options = {
                                     type: 'object',
                                     required: ['immatriculation', 'conducteur_nom', 'conducteur_prenom', 'date_appel', 'date_accident', 'contexte'],
                                     properties: {
-                                        immatriculation: { type: 'string', example: 'AB-123-CD' },
-                                        conducteur_nom: { type: 'string', example: 'Dupont' },
-                                        conducteur_prenom: { type: 'string', example: 'Jean' },
-                                        conducteur_est_assure: { type: 'boolean', example: true },
-                                        date_appel: { type: 'string', format: 'date-time', example: '2026-03-25T10:00:00Z' },
-                                        date_accident: { type: 'string', format: 'date-time', example: '2026-03-25T09:00:00Z' },
-                                        contexte: { type: 'string', example: 'Collision au carrefour de la Paix' },
-                                        responsabilite_engagee: { type: 'boolean', example: true },
-                                        pourcentage_responsabilite: { type: 'integer', enum: [0, 50, 100], example: 50 }
+                                        immatriculation:            { type: 'string', example: 'AB-123-CD' },
+                                        conducteur_nom:             { type: 'string', example: 'Dupont' },
+                                        conducteur_prenom:          { type: 'string', example: 'Jean' },
+                                        conducteur_est_assure:      { type: 'boolean', example: true },
+                                        date_appel:                 { type: 'string', format: 'date-time', example: '2026-03-25T10:00:00.000Z' },
+                                        date_accident:              { type: 'string', format: 'date-time', example: '2026-03-25T09:00:00.000Z' },
+                                        contexte:                   { type: 'string', example: 'Collision au carrefour de la Paix' },
+                                        responsabilite_engagee:     { type: 'boolean', example: true },
+                                        pourcentage_responsabilite: { type: 'integer', minimum: 0, maximum: 100, example: 50 }
                                     }
                                 }
                             }
@@ -311,35 +357,157 @@ const options = {
             '/sinistre/{id}': {
                 get: {
                     tags: ['Sinistres'],
-                    summary: 'Récupérer un sinistre',
+                    summary: 'Récupérer un sinistre avec ses documents et son dossier',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
-                    responses: {
-                        200: { description: 'Sinistre trouvé' },
-                        404: { description: 'Introuvable' }
-                    }
+                    responses: { 200: { description: 'Sinistre trouvé' }, 404: { description: 'Introuvable' } }
                 },
                 put: {
                     tags: ['Sinistres'],
-                    summary: 'Modifier un sinistre',
+                    summary: 'Modifier un sinistre (créateur ou gestionnaire uniquement)',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
                     requestBody: {
                         content: {
                             'application/json': {
-                                schema: { $ref: '#/components/schemas/Sinistre' }
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        immatriculation:            { type: 'string' },
+                                        conducteur_nom:             { type: 'string' },
+                                        conducteur_prenom:          { type: 'string' },
+                                        conducteur_est_assure:      { type: 'boolean' },
+                                        date_appel:                 { type: 'string', format: 'date-time' },
+                                        date_accident:              { type: 'string', format: 'date-time' },
+                                        contexte:                   { type: 'string' },
+                                        responsabilite_engagee:     { type: 'boolean' },
+                                        pourcentage_responsabilite: { type: 'integer', minimum: 0, maximum: 100 },
+                                        statut:                     { type: 'string', enum: ['en_cours', 'complet', 'clos'] }
+                                    }
+                                }
                             }
                         }
                     },
-                    responses: { 200: { description: 'Sinistre modifié' } }
+                    responses: {
+                        200: { description: 'Sinistre modifié' },
+                        403: { description: 'Non autorisé (pas le créateur ni gestionnaire)' },
+                        404: { description: 'Introuvable' }
+                    }
                 },
                 delete: {
                     tags: ['Sinistres'],
-                    summary: 'Supprimer un sinistre',
+                    summary: 'Supprimer un sinistre (créateur ou gestionnaire uniquement)',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
-                    responses: { 200: { description: 'Sinistre supprimé' } }
+                    responses: {
+                        200: { description: 'Sinistre supprimé' },
+                        403: { description: 'Non autorisé' },
+                        404: { description: 'Introuvable' }
+                    }
                 }
             },
 
-            // ── DOSSIERS ──────────────────────────────────────────
+            // ── DOCUMENTS ─────────────────────────────────────────────────────
+            '/sinistre/download-docs/{pathname}': {
+                get: {
+                    tags: ['Documents'],
+                    summary: 'Télécharger / afficher un fichier uploadé',
+                    parameters: [
+                        {
+                            in: 'path', name: 'pathname', required: true,
+                            schema: { type: 'string' },
+                            description: 'Nom du fichier (ex. 1714000000000-carte_grise.pdf)'
+                        }
+                    ],
+                    responses: {
+                        200: { description: 'Flux du fichier', content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } } },
+                        404: { description: 'Fichier introuvable' }
+                    }
+                }
+            },
+            '/sinistre/{id}/document': {
+                post: {
+                    tags: ['Documents'],
+                    summary: 'Uploader un document attaché à un sinistre',
+                    parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
+                    requestBody: {
+                        required: true,
+                        content: {
+                            'multipart/form-data': {
+                                schema: {
+                                    type: 'object',
+                                    required: ['file', 'type'],
+                                    properties: {
+                                        file: { type: 'string', format: 'binary', description: 'Fichier PDF ou image' },
+                                        type: { type: 'string', enum: ['attestation_assurance', 'carte_grise', 'piece_identite'] }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: {
+                        201: { description: 'Document uploadé' },
+                        400: { description: 'Fichier manquant ou type invalide' },
+                        404: { description: 'Sinistre introuvable' }
+                    }
+                }
+            },
+            '/sinistre/{id}/document/{docId}': {
+                delete: {
+                    tags: ['Documents'],
+                    summary: 'Supprimer un document d\'un sinistre',
+                    parameters: [
+                        { in: 'path', name: 'id',    required: true, schema: { type: 'integer' } },
+                        { in: 'path', name: 'docId', required: true, schema: { type: 'integer' } }
+                    ],
+                    responses: {
+                        200: { description: 'Document supprimé' },
+                        404: { description: 'Document introuvable' }
+                    }
+                }
+            },
+
+            // ── NOTIFICATIONS MAIL ────────────────────────────────────────────
+            '/sinistre/{id}/request-documents': {
+                post: {
+                    tags: ['Notifications'],
+                    summary: 'Envoyer un email à l\'assuré pour lui demander ses documents',
+                    parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
+                    requestBody: {
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        types: {
+                                            type: 'array',
+                                            items: { type: 'string', enum: ['attestation_assurance', 'carte_grise', 'piece_identite'] },
+                                            example: ['attestation_assurance', 'carte_grise'],
+                                            description: 'Types de documents demandés (tous par défaut)'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responses: {
+                        200: { description: 'Email envoyé' },
+                        404: { description: 'Sinistre ou utilisateur introuvable' },
+                        500: { description: 'Erreur envoi mail' }
+                    }
+                }
+            },
+            '/sinistre/{id}/request-rib': {
+                post: {
+                    tags: ['Notifications'],
+                    summary: 'Envoyer un email à l\'assuré pour lui demander son RIB',
+                    parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
+                    responses: {
+                        200: { description: 'Email envoyé' },
+                        404: { description: 'Sinistre ou utilisateur introuvable' },
+                        500: { description: 'Erreur envoi mail' }
+                    }
+                }
+            },
+
+            // ── DOSSIERS ──────────────────────────────────────────────────────
             '/dossier': {
                 get: {
                     tags: ['Dossiers'],
@@ -348,7 +516,7 @@ const options = {
                 },
                 post: {
                     tags: ['Dossiers'],
-                    summary: 'Créer un dossier',
+                    summary: 'Créer un dossier lié à un sinistre',
                     requestBody: {
                         required: true,
                         content: {
@@ -357,9 +525,9 @@ const options = {
                                     type: 'object',
                                     required: ['sinistre_id'],
                                     properties: {
-                                        sinistre_id: { type: 'integer', example: 1 },
+                                        sinistre_id:     { type: 'integer', example: 1 },
                                         charge_suivi_id: { type: 'integer', example: 2 },
-                                        scenario: { type: 'string', enum: ['reparable', 'perte_totale'] }
+                                        scenario:        { type: 'string', enum: ['reparable', 'perte_totale'] }
                                     }
                                 }
                             }
@@ -374,18 +542,15 @@ const options = {
             '/dossier/{id}': {
                 get: {
                     tags: ['Dossiers'],
-                    summary: 'Récupérer un dossier',
+                    summary: 'Récupérer un dossier avec ses étapes',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
-                    responses: {
-                        200: { description: 'Dossier trouvé' },
-                        404: { description: 'Introuvable' }
-                    }
+                    responses: { 200: { description: 'Dossier trouvé' }, 404: { description: 'Introuvable' } }
                 }
             },
             '/dossier/{id}/statut': {
                 put: {
                     tags: ['Dossiers'],
-                    summary: 'Changer le statut d\'un dossier',
+                    summary: 'Changer le statut d\'un dossier (workflow)',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
                     requestBody: {
                         required: true,
@@ -409,17 +574,17 @@ const options = {
                 }
             },
 
-            // ── ETAPES ────────────────────────────────────────────
+            // ── ETAPES ────────────────────────────────────────────────────────
             '/dossier/{dossier_id}/etapes': {
                 get: {
                     tags: ['Etapes'],
-                    summary: 'Liste les étapes d\'un dossier',
+                    summary: "Liste les étapes d'un dossier",
                     parameters: [{ in: 'path', name: 'dossier_id', required: true, schema: { type: 'integer' } }],
                     responses: { 200: { description: 'Liste des étapes' } }
                 },
                 post: {
                     tags: ['Etapes'],
-                    summary: 'Créer une étape',
+                    summary: "Créer une étape dans un dossier",
                     parameters: [{ in: 'path', name: 'dossier_id', required: true, schema: { type: 'integer' } }],
                     requestBody: {
                         required: true,
@@ -429,10 +594,10 @@ const options = {
                                     type: 'object',
                                     required: ['dossier_id', 'libelle'],
                                     properties: {
-                                        dossier_id: { type: 'integer', example: 1 },
-                                        libelle: { type: 'string', example: 'Expertise planifiée' },
+                                        dossier_id:         { type: 'integer', example: 1 },
+                                        libelle:            { type: 'string', example: 'Expertise planifiée' },
                                         validation_requise: { type: 'boolean', example: false },
-                                        date_echeance: { type: 'string', format: 'date-time' }
+                                        date_echeance:      { type: 'string', format: 'date-time' }
                                     }
                                 }
                             }
@@ -447,7 +612,7 @@ const options = {
             '/etape/{id}/valider': {
                 put: {
                     tags: ['Etapes'],
-                    summary: 'Valider une étape',
+                    summary: 'Valider une étape (gestionnaire requis si validation_requise = true)',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
                     requestBody: {
                         content: {
@@ -455,7 +620,7 @@ const options = {
                                 schema: {
                                     type: 'object',
                                     properties: {
-                                        commentaire: { type: 'string', example: 'Expertise effectuée le 25/03/2026' }
+                                        commentaire: { type: 'string', example: 'Expertise effectuée le 25/03/2026, véhicule réparable' }
                                     }
                                 }
                             }
@@ -463,7 +628,7 @@ const options = {
                     },
                     responses: {
                         200: { description: 'Étape validée' },
-                        403: { description: 'Validation gestionnaire requise' },
+                        403: { description: 'Validation par un gestionnaire requise' },
                         404: { description: 'Étape introuvable' }
                     }
                 }
