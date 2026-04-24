@@ -14,7 +14,10 @@ const BASE_URL = getBaseUrl();
 export const API = {
     BASE_URL,
     LOGIN:            `${BASE_URL}/login`,
+    REGISTER:         `${BASE_URL}/register`,
     LOGOUT:           `${BASE_URL}/logout`,
     FORGOT_PASSWORD:  `${BASE_URL}/forgot-password`,
     RESET_PASSWORD:   `${BASE_URL}/reset-password`,
+    SINISTRES:        `${BASE_URL}/sinistre`,
+    SINISTRE:         (id: number) => `${BASE_URL}/sinistre/${id}`,
 };

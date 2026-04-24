@@ -6,6 +6,8 @@ import {
     Platform,
     ScrollView,
     Dimensions,
+    StatusBar,
+    TouchableOpacity,
 } from 'react-native';
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useRouter } from 'expo-router';
@@ -37,287 +39,213 @@ export default function LoginScreen() {
     };
 
     return (
-        <KeyboardAvoidingView
-            style={styles.root}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-            {/* ── Fond haut ── */}
-            <View style={styles.topBackground}>
-                {/* Cercles décoratifs */}
-                <View style={styles.circle1} />
-                <View style={styles.circle2} />
-
-                {/* Logo */}
-                <View style={styles.logoContainer}>
-                    <View style={styles.logoIcon}>
-                        <Text style={styles.logoEmoji}>🛡️</Text>
-                    </View>
-                    <Text style={styles.logoText}>AssurMoi</Text>
-                    <Text style={styles.logoSubtitle}>Votre assurance, simplifiée</Text>
-                </View>
-            </View>
-
-            {/* ── Carte formulaire ── */}
-            <ScrollView
-                contentContainerStyle={styles.scroll}
-                keyboardShouldPersistTaps="handled"
-                bounces={false}
+        <>
+            <StatusBar barStyle="light-content" backgroundColor="#0D47A1" />
+            <KeyboardAvoidingView
+                style={styles.root}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Connexion</Text>
-                    <Text style={styles.cardSubtitle}>Bienvenue ! Entrez vos identifiants.</Text>
+                <ScrollView
+                    contentContainerStyle={styles.scroll}
+                    keyboardShouldPersistTaps="handled"
+                    bounces={false}
+                >
+                    {/* ── Zone haute ── */}
+                    <View style={styles.topZone}>
+                        <View style={styles.bubble1} />
+                        <View style={styles.bubble2} />
+                        <View style={styles.bubble3} />
 
-                    <View style={styles.inputWrapper}>
+                        <View style={styles.logoWrap}>
+                            <View style={styles.logoBox}>
+                                <Text style={styles.logoIcon}>🛡️</Text>
+                            </View>
+                            <Text style={styles.appName}>AssurMoi</Text>
+                            <Text style={styles.appTagline}>Votre assurance, simplifiée</Text>
+                        </View>
+                    </View>
+
+                    {/* ── Formulaire ── */}
+                    <View style={styles.formSheet}>
+                        <View style={styles.handle} />
+
+                        <Text style={styles.formTitle}>Connexion</Text>
+                        <Text style={styles.formSub}>
+                            Entrez vos identifiants pour accéder à votre espace.
+                        </Text>
+
                         <TextInput
                             label="Nom d'utilisateur"
                             value={username}
-                            onChangeText={setUsername}
+                            onChangeText={t => { setUsername(t); setError(''); }}
                             autoCapitalize="none"
                             autoCorrect={false}
-                            left={<TextInput.Icon icon="account-outline" color="#1565C0" />}
                             mode="outlined"
-                            outlineColor="#E0E7FF"
+                            left={<TextInput.Icon icon="account-circle-outline" color="#1565C0" />}
+                            outlineColor="#DDE3F0"
                             activeOutlineColor="#1565C0"
+                            outlineStyle={{ borderRadius: 14 }}
                             style={styles.input}
-                            contentStyle={styles.inputContent}
                         />
-                    </View>
 
-                    <View style={styles.inputWrapper}>
                         <TextInput
                             label="Mot de passe"
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={t => { setPassword(t); setError(''); }}
                             secureTextEntry={!passwordVisible}
+                            mode="outlined"
                             left={<TextInput.Icon icon="lock-outline" color="#1565C0" />}
                             right={
                                 <TextInput.Icon
                                     icon={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
-                                    color="#888"
-                                    onPress={() => setPasswordVisible(!passwordVisible)}
+                                    color="#999"
+                                    onPress={() => setPasswordVisible(v => !v)}
                                 />
                             }
-                            mode="outlined"
-                            outlineColor="#E0E7FF"
+                            outlineColor="#DDE3F0"
                             activeOutlineColor="#1565C0"
+                            outlineStyle={{ borderRadius: 14 }}
                             style={styles.input}
-                            contentStyle={styles.inputContent}
                         />
-                    </View>
 
-                    {!!error && (
-                        <View style={styles.errorBox}>
-                            <HelperText type="error" visible style={styles.errorText}>
-                                ⚠️  {error}
-                            </HelperText>
+                        {!!error && (
+                            <View style={styles.errorWrap}>
+                                <Text style={styles.errorIcon}>⚠️</Text>
+                                <HelperText type="error" visible style={styles.errorMsg}>
+                                    {error}
+                                </HelperText>
+                            </View>
+                        )}
+
+                        <Button
+                            mode="contained"
+                            onPress={handleLogin}
+                            loading={isLoading}
+                            disabled={isLoading}
+                            buttonColor="#1565C0"
+                            style={styles.btn}
+                            contentStyle={styles.btnContent}
+                            labelStyle={styles.btnLabel}
+                        >
+                            {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+                        </Button>
+
+                        <View style={styles.registerRow}>
+                            <Text style={styles.registerText}>Pas encore de compte ? </Text>
+                            <TouchableOpacity onPress={() => router.push('/register')}>
+                                <Text style={styles.registerLink}>S'inscrire</Text>
+                            </TouchableOpacity>
                         </View>
-                    )}
 
-                    <Button
-                        mode="contained"
-                        onPress={handleLogin}
-                        loading={isLoading}
-                        disabled={isLoading}
-                        style={styles.button}
-                        contentStyle={styles.buttonContent}
-                        labelStyle={styles.buttonLabel}
-                        buttonColor="#1565C0"
-                    >
-                        {isLoading ? 'Connexion...' : 'Se connecter'}
-                    </Button>
-
-                    <View style={styles.divider}>
-                        <View style={styles.dividerLine} />
-                        <Text style={styles.dividerText}>ou</Text>
-                        <View style={styles.dividerLine} />
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>© 2026 AssurMoi</Text>
+                        </View>
                     </View>
-
-                    <Button
-                        mode="outlined"
-                        onPress={() => router.push('/forgot-password')}
-                        style={styles.forgotButton}
-                        textColor="#1565C0"
-                        labelStyle={styles.forgotLabel}
-                    >
-                        Mot de passe oublié ?
-                    </Button>
-                </View>
-
-                {/* Footer */}
-                <Text style={styles.footer}>
-                    © 2026 AssurMoi — Tous droits réservés
-                </Text>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </>
     );
 }
 
 const styles = StyleSheet.create({
-    root: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
+    root: { flex: 1, backgroundColor: '#0D47A1' },
+    scroll: { flexGrow: 1 },
 
-    /* ── Fond haut bleu ── */
-    topBackground: {
-        height: height * 0.38,
-        backgroundColor: '#1565C0',
+    /* ── Zone haute ── */
+    topZone: {
+        height: height * 0.36,
+        backgroundColor: '#0D47A1',
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden',
     },
-    circle1: {
-        position: 'absolute',
-        width: 300,
-        height: 300,
-        borderRadius: 150,
-        backgroundColor: 'rgba(255,255,255,0.07)',
-        top: -80,
-        right: -60,
+    bubble1: {
+        position: 'absolute', width: 320, height: 320, borderRadius: 160,
+        backgroundColor: 'rgba(255,255,255,0.06)', top: -100, right: -80,
     },
-    circle2: {
-        position: 'absolute',
-        width: 200,
-        height: 200,
-        borderRadius: 100,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        bottom: -60,
-        left: -40,
+    bubble2: {
+        position: 'absolute', width: 180, height: 180, borderRadius: 90,
+        backgroundColor: 'rgba(255,255,255,0.04)', bottom: -50, left: -30,
     },
-    logoContainer: {
-        alignItems: 'center',
+    bubble3: {
+        position: 'absolute', width: 100, height: 100, borderRadius: 50,
+        backgroundColor: 'rgba(255,255,255,0.06)', top: 20, left: 40,
     },
-    logoIcon: {
-        width: 72,
-        height: 72,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 12,
+    logoWrap: { alignItems: 'center' },
+    logoBox: {
+        width: 80, height: 80, borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        justifyContent: 'center', alignItems: 'center',
+        marginBottom: 14,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
     },
-    logoEmoji: {
-        fontSize: 36,
-    },
-    logoText: {
-        fontSize: 32,
-        fontWeight: '800',
-        color: '#fff',
+    logoIcon: { fontSize: 38 },
+    appName: {
+        fontSize: 34, fontWeight: '800', color: '#fff',
         letterSpacing: 1.5,
     },
-    logoSubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.75)',
-        marginTop: 4,
-        letterSpacing: 0.5,
+    appTagline: {
+        fontSize: 13, color: 'rgba(255,255,255,0.65)',
+        marginTop: 6, letterSpacing: 0.3,
     },
 
-    /* ── Carte ── */
-    scroll: {
-        flexGrow: 1,
-        backgroundColor: '#F5F7FF',
-    },
-    card: {
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 32,
-        borderTopRightRadius: 32,
-        marginTop: -24,
+    /* ── Formulaire ── */
+    formSheet: {
+        flex: 1,
+        backgroundColor: '#F4F6FB',
+        borderTopLeftRadius: 36,
+        borderTopRightRadius: 36,
         paddingHorizontal: 28,
-        paddingTop: 36,
-        paddingBottom: 28,
-        shadowColor: '#1565C0',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-        elevation: 8,
+        paddingTop: 16,
+        paddingBottom: 40,
+        marginTop: -8,
     },
-    cardTitle: {
-        fontSize: 26,
-        fontWeight: '700',
-        color: '#111',
-        marginBottom: 4,
+    handle: {
+        width: 40, height: 4, borderRadius: 2,
+        backgroundColor: '#DDE3F0',
+        alignSelf: 'center', marginBottom: 28,
     },
-    cardSubtitle: {
-        fontSize: 14,
-        color: '#888',
-        marginBottom: 28,
+    formTitle: {
+        fontSize: 28, fontWeight: '800', color: '#0D1B3E',
+        marginBottom: 6,
     },
-
-    /* ── Inputs ── */
-    inputWrapper: {
-        marginBottom: 16,
+    formSub: {
+        fontSize: 14, color: '#7B8DB0',
+        marginBottom: 28, lineHeight: 20,
     },
     input: {
-        backgroundColor: '#FAFBFF',
-        borderRadius: 12,
-    },
-    inputContent: {
+        marginBottom: 14,
+        backgroundColor: '#fff',
         fontSize: 15,
     },
 
     /* ── Erreur ── */
-    errorBox: {
-        backgroundColor: '#FFF0F0',
-        borderRadius: 10,
-        paddingHorizontal: 8,
+    errorWrap: {
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: '#FEE2E2',
+        borderRadius: 12, paddingHorizontal: 12,
         marginBottom: 8,
     },
-    errorText: {
-        fontSize: 13,
-    },
+    errorIcon: { fontSize: 14, marginRight: 4 },
+    errorMsg: { flex: 1, fontSize: 13, color: '#B91C1C' },
 
-    /* ── Bouton principal ── */
-    button: {
-        marginTop: 8,
-        borderRadius: 12,
+    /* ── Bouton ── */
+    btn: {
+        marginTop: 8, borderRadius: 14,
         shadowColor: '#1565C0',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.35, shadowRadius: 10,
+        elevation: 6,
     },
-    buttonContent: {
-        paddingVertical: 8,
-    },
-    buttonLabel: {
-        fontSize: 16,
-        fontWeight: '700',
-        letterSpacing: 0.5,
-    },
+    btnContent: { paddingVertical: 8 },
+    btnLabel: { fontSize: 16, fontWeight: '700', letterSpacing: 0.4 },
 
-    /* ── Divider ── */
-    divider: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 20,
-    },
-    dividerLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: '#E8EAF6',
-    },
-    dividerText: {
-        marginHorizontal: 12,
-        color: '#aaa',
-        fontSize: 13,
-    },
-
-    /* ── Bouton secondaire ── */
-    forgotButton: {
-        borderRadius: 12,
-        borderColor: '#C5CAE9',
-    },
-    forgotLabel: {
-        fontSize: 14,
-        fontWeight: '500',
-    },
+    /* ── Inscription ── */
+    registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 16 },
+    registerText: { color: '#94A3B8', fontSize: 14 },
+    registerLink: { color: '#1565C0', fontSize: 14, fontWeight: '700' },
 
     /* ── Footer ── */
-    footer: {
-        textAlign: 'center',
-        color: '#bbb',
-        fontSize: 12,
-        paddingVertical: 24,
-        backgroundColor: '#F5F7FF',
-    },
+    footer: { alignItems: 'center', marginTop: 24 },
+    footerText: { fontSize: 12, color: '#B0BAD0' },
 });

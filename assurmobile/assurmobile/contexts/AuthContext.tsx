@@ -1,7 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
-import { API } from '@/constants/api';
+import { authApi } from '@/utils/fetchData';
 
+const TOKEN_KEY = '@assurmoi_token';
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
 interface User {
     id: number;
     username: string;
@@ -21,36 +25,62 @@ interface AuthContextType {
     user: User | null;
     token: string | null;
     isLoading: boolean;
+    isInitializing: boolean;   // true pendant la vérification du token au démarrage
     isAuthenticated: boolean;
     login: (username: string, password: string) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
 }
 
+// ─── Context ───────────────────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+// ─── Helper ────────────────────────────────────────────────────────────────────
+function isTokenValid(token: string): boolean {
+    try {
+        const { exp } = jwtDecode<JwtPayload>(token);
+        return Date.now() < exp * 1000; // exp est en secondes
+    } catch {
+        return false;
+    }
+}
 
+// ─── Provider ──────────────────────────────────────────────────────────────────
+export function AuthProvider({ children }: { children: ReactNode }) {
+    const [user, setUser]               = useState<User | null>(null);
+    const [token, setToken]             = useState<string | null>(null);
+    const [isLoading, setIsLoading]     = useState(false);
+    const [isInitializing, setIsInitializing] = useState(true); // splash de vérification
+
+    // ── Au démarrage : restaurer le token depuis AsyncStorage ──
+    useEffect(() => {
+        const restoreToken = async () => {
+            try {
+                const saved = await AsyncStorage.getItem(TOKEN_KEY);
+                if (saved && isTokenValid(saved)) {
+                    const decoded = jwtDecode<JwtPayload>(saved);
+                    setToken(saved);
+                    setUser(decoded.user);
+                } else if (saved) {
+                    // Token expiré : on nettoie
+                    await AsyncStorage.removeItem(TOKEN_KEY);
+                }
+            } catch {
+                // Erreur de lecture : on continue sans token
+            } finally {
+                setIsInitializing(false);
+            }
+        };
+        restoreToken();
+    }, []);
+
+    // ── Login ──
     const login = async (username: string, password: string) => {
         setIsLoading(true);
         try {
-            const response = await fetch(API.LOGIN, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Identifiants incorrects');
-            }
-
-            // Décodage sécurisé du JWT avec jwt-decode
+            const data = await authApi.login(username, password);
             const decoded = jwtDecode<JwtPayload>(data.token);
 
+            await AsyncStorage.setItem(TOKEN_KEY, data.token);
             setToken(data.token);
             setUser(decoded.user);
         } finally {
@@ -58,42 +88,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // ── Logout ──
     const logout = async () => {
         try {
-            if (token) {
-                await fetch(API.LOGOUT, {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            }
+            if (token) await authApi.logout(token);
         } catch {
             // On déconnecte quoi qu'il arrive
         } finally {
-            setUser(null);
+            await AsyncStorage.removeItem(TOKEN_KEY);
             setToken(null);
+            setUser(null);
         }
     };
 
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                token,
-                isLoading,
-                isAuthenticated: !!token,
-                login,
-                logout,
-            }}
-        >
+        <AuthContext.Provider value={{
+            user, token, isLoading, isInitializing,
+            isAuthenticated: !!token,
+            login, logout,
+        }}>
             {children}
         </AuthContext.Provider>
     );
 }
 
+// ─── Hook ──────────────────────────────────────────────────────────────────────
 export function useAuth() {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth doit être utilisé dans un AuthProvider');
-    }
-    return context;
+    const ctx = useContext(AuthContext);
+    if (!ctx) throw new Error('useAuth doit être utilisé dans un AuthProvider');
+    return ctx;
 }
